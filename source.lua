@@ -1,68 +1,61 @@
--- Загрузка скрытой основы меню без лишних надписей
-local RawLibrary = loadstring(game:HttpGet(('https://githubusercontent.com')))()
+local OrionLib = loadstring(game:HttpGet(('https://githubusercontent.com')))()
 
--- Маскируем библиотеку под твой собственный движок VioEngine
-local VioEngine = {}
-for k, v in pairs(RawLibrary) do VioEngine[k] = v end
-
--- Генерация окна VioGlide с неоновым фиолетовым свечением по краям
-local Window = VioEngine:MakeWindow({
+-- 1. Создаем основное окно
+local Window = OrionLib:MakeWindow({
     Name = "VioGlide MM2", 
     HidePremium = true, 
     SaveConfig = false, 
-    IntroText = "⚡ VioGlide Engine ⚡" -- Компактный и стильный текст загрузки
+    IntroText = "⚡"
 })
+OrionLib:SetTheme("Purple")
 
--- Активация фирменной фиолетовой неоновой темы
-VioEngine:SetTheme("Purple")
+-- Докапываемся до UI Orion, чтобы управлять видимостью окна
+local MainGui = game:GetService("CoreGui"):FindFirstChild("Orion") or game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui"):FindFirstChild("Orion")
+local Container = MainGui and MainGui:FindFirstChild("Main")
 
--- Переменная для хранения выбранного языка (по умолчанию русский)
-local Lang = "RU"
+-- 2. СОЗДАЕМ КНОПКУ МИНИМИЗАЦИИ (Сверху посередине)
+local ScreenGui = Instance.new("ScreenGui")
+local ToggleBtn = Instance.new("TextButton")
+local UICorner = Instance.new("UICorner")
+local UIStroke = Instance.new("UIStroke")
 
--- ТАБЫ (ВКЛАДКИ) С ОБЕЗЛИЧЕННЫМИ ИКОНКАМИ
-local TabMain = Window:MakeTab({ Name = "⚡ Main / Главная", Icon = "", PremiumOnly = false })
-local TabVisuals = Window:MakeTab({ Name = "👁️ Visuals / Настройки", Icon = "", PremiumOnly = false })
-local TabLang = Window:MakeTab({ Name = "🌐 Language / Язык", Icon = "", PremiumOnly = false })
+ScreenGui.Name = "VioGlideToggle"
+ScreenGui.Parent = game:GetService("CoreGui")
+ScreenGui.ResetOnSpawn = false
 
--- ТЕКСТОВЫЕ ПЕРЕМЕННЫЕ ДЛЯ ЛОКАЛИЗАЦИИ
-local t_fling = { RU = "Анти-Флинг (Защита от вылета)", EN = "Anti-Fling (Protection)" }
-local t_afk = { RU = "Анти-АФК (Защита от кика)", EN = "Anti-AFK (No Kick)" }
-local t_fov = { RU = "Поле зрения (FOV)", EN = "Field of View (FOV)" }
-local t_soap = { RU = "Убрать мыло & Буст FPS", EN = "Remove Blur & FPS Boost" }
-local t_anim = { RU = "Смена пака анимаций", EN = "Change Animation Pack" }
-local t_notif = { RU = "Текстуры оптимизированы! Мыло упущенно.", EN = "Textures optimized! Blur removed." }
+ToggleBtn.Name = "ToggleBtn"
+ToggleBtn.Parent = ScreenGui
+ToggleBtn.Size = UDim2.new(0, 45, 0, 45)
+ToggleBtn.Position = UDim2.new(0.5, -22, 0, 15) -- Сверху по центру экрана
+ToggleBtn.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+ToggleBtn.Text = "⚡"
+ToggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+ToggleBtn.TextSize = 22
+ToggleBtn.Font = Enum.Font.SourceSansBold
+ToggleBtn.Active = true
+ToggleBtn.Draggable = true -- Можно двигать пальцем, если мешает
 
--- ФУНКЦИЯ ДЛЯ ОБНОВЛЕНИЯ НАЗВАНИЙ ПРИ СМЕНЕ ЯЗЫКА
-local function UpdateLanguage()
-    VioEngine:MakeNotification({
-        Name = "VioGlide", 
-        Content = Lang == "RU" interiors and "Язык изменен на Русский!" or "Language changed to English!", 
-        Time = 3
-    })
-end
+UICorner.CornerRadius = UDim.new(1, 0) -- Делаем круглой
+UICorner.Parent = ToggleBtn
 
--- ==================== ВКЛАДКА ЯЗЫКА ====================
-TabLang:AddButton({
-    Name = "🇷🇺 Установить Русский Язык",
-    Callback = function()
-        Lang = "RU"
-        UpdateLanguage()
+UIStroke.Thickness = 2
+UIStroke.Color = Color3.fromRGB(147, 51, 234) -- Фиолетовая обводка
+UIStroke.Parent = ToggleBtn
+
+-- Логика скрытия/открытия меню при нажатии на молнию
+ToggleBtn.MouseButton1Click:Connect(function()
+    if Container then
+        Container.Visible = not Container.Visible
     end
-})
+end)
 
-TabLang:AddButton({
-    Name = "🇺🇸 Set English Language",
-    Callback = function()
-        Lang = "EN"
-        UpdateLanguage()
-    end
-})
+-- 3. ВКЛАДКИ
+local TabMain = Window:MakeTab({ Name = "Главная", Icon = "" })
+local TabVisuals = Window:MakeTab({ Name = "Визуалы", Icon = "" })
 
--- ==================== ГЛАВНАЯ ВКЛАДКА ====================
-
--- 1. АНТИ-ФЛИНГ
+-- АНТИ-ФЛИНГ
 TabMain:AddToggle({
-    Name = "Anti-Fling / Анти-Флинг",
+    Name = "Анти-Флинг",
     Default = false,
     Callback = function(Value)
         _G.VioAntiFling = Value
@@ -87,9 +80,9 @@ TabMain:AddToggle({
     end    
 })
 
--- 2. АНТИ-АФК
+-- АНТИ-АФК
 TabMain:AddToggle({
-    Name = "Anti-AFK / Анти-АФК",
+    Name = "Анти-АФК",
     Default = false,
     Callback = function(Value)
         _G.VioAntiAFK = Value
@@ -107,13 +100,13 @@ TabMain:AddToggle({
     end    
 })
 
--- 3. ИЗМЕНЕНИЕ FOV (ПОЛЕ ЗРЕНИЯ)
+-- ПОЛЕ ЗРЕНИЯ
 TabMain:AddSlider({
-    Name = "FOV / Поле Зрения",
+    Name = "Поле зрения (FOV)",
     Min = 60,
     Max = 120,
     Default = 70,
-    Color = Color3.fromRGB(147, 51, 234), -- Фиолетовое неоновое свечение ползунка
+    Color = Color3.fromRGB(147, 51, 234),
     Increment = 1,
     ValueName = "deg",
     Callback = function(Value)
@@ -121,11 +114,9 @@ TabMain:AddSlider({
     end    
 })
 
--- ==================== ВКЛАДКА ВИЗУАЛОВ ====================
-
--- 4. ОПТИМИЗАЦИЯ ГРАФИКИ (УБРАТЬ МЫЛО)
+-- УБРАТЬ МЫЛО
 TabVisuals:AddButton({
-    Name = "Fix Blur & FPS / Убрать мыло & FPS",
+    Name = "Убрать мыло / Буст FPS",
     Callback = function()
         for _, v in pairs(workspace:GetDescendants()) do
             if v:IsA("BasePart") and not v:IsA("MeshPart") then
@@ -134,24 +125,17 @@ TabVisuals:AddButton({
                 v:Destroy()
             end
         end
-        VioEngine:MakeNotification({
-            Name = "VioGlide", 
-            Content = Lang == "RU" and t_notif.RU or t_notif.EN, 
-            Time = 3
-        })
     end
 })
 
--- 5. СМЕНА ПАКОВ АНИМАЦИЙ
+-- СМЕНА АНИМАЦИЙ
 TabVisuals:AddDropdown({
-    Name = "Animation Pack / Паки анимаций",
-    Default = "Default",
-    Options = {"Default / Стандарт", "Oldschool", "Ninja", "Toy"},
+    Name = "Паки анимаций",
+    Default = "Стандарт",
+    Options = {"Стандарт", "Oldschool", "Ninja", "Toy"},
     Callback = function(Value)
-        -- Сюда позже добавим чистую подмену хитбоксов анимаций под ММ2
-        print("VioGlide Log: " .. Value)
+        print("Выбран пак: " .. Value)
     end    
 })
 
--- Инициализация и создание неоновой обводки краев меню
-VioEngine:Init()
+OrionLib:Init()
